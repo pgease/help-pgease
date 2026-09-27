@@ -1,107 +1,76 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, ShieldCheck, Mail, Phone, Clock, Sparkles } from 'lucide-react';
+import { ExternalLink, Mail, Phone, Clock } from 'lucide-react';
+import { HELP_TOPICS } from '../data/topics';
+import { MARKETING_SITE_URL, SUPPORT_EMAIL, SUPPORT_HOURS, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, ownerAppUrl, supportMailtoUrl } from '../config/links';
+import { Container } from './ui';
 
-export const Footer: React.FC = () => {
-  return (
-    <footer className="bg-slate-900 text-slate-400 text-xs border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-10">
-          {/* Brand Info */}
-          <div className="space-y-4 md:col-span-2">
-            <Link to="/" className="inline-block">
-              <img
-                src="/assets/logo-transparent.png"
-                alt="PG Ease"
-                className="h-9 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity"
-              />
-            </Link>
-            <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              Official video documentation and operator learning hub for PG Ease Coliving & Hostel ERP. Master tenant onboarding, digital Aadhaar KYC, direct zero-fee UPI collections, and automated rental agreements.
-            </p>
-            <div className="flex items-center gap-2 pt-1">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-900/60 border border-brand-700/50 text-brand-300 text-[11px] font-medium">
-                <Sparkles className="w-3 h-3 text-brand-400" />
-                Trusted by 500+ PG & Hostel Operators
-              </span>
-            </div>
-          </div>
-
-          {/* Core Modules */}
-          <div>
-            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3.5">Key Tutorials</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/tenant_add" className="hover:text-brand-400 transition-colors">Add & Onboard Tenants</Link>
-              </li>
-              <li>
-                <Link to="/rent_collection" className="hover:text-brand-400 transition-colors">Direct UPI Rent Setup</Link>
-              </li>
-              <li>
-                <Link to="/room_management" className="hover:text-brand-400 transition-colors">Rooms & Bed Allocation</Link>
-              </li>
-              <li>
-                <Link to="/kyc_verification" className="hover:text-brand-400 transition-colors">DigiLocker Aadhaar KYC</Link>
-              </li>
-              <li>
-                <Link to="/staff_management" className="hover:text-brand-400 transition-colors">Staff Roles & Permissions</Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Modules 2 */}
-          <div>
-            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3.5">Operations</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/expense_tracker" className="hover:text-brand-400 transition-colors">PG Expense & P&L Tracker</Link>
-              </li>
-              <li>
-                <Link to="/complaints_resolution" className="hover:text-brand-400 transition-colors">Tenant Complaints Desk</Link>
-              </li>
-              <li>
-                <Link to="/public_listing" className="hover:text-brand-400 transition-colors">Publish PG on Search</Link>
-              </li>
-              <li>
-                <a href="https://pgease.in" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-brand-400 transition-colors">
-                  <span>Explore PGEase.in</span>
-                  <ExternalLink className="w-3 h-3 opacity-60" />
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support Contacts */}
-          <div>
-            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3.5">Dedicated Support</h4>
-            <ul className="space-y-2.5 text-xs">
-              <li className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 text-brand-400 shrink-0" />
-                <a href="tel:+917701953356" className="hover:text-white transition-colors">+91 77019 53356</a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="h-3.5 w-3.5 text-brand-400 shrink-0" />
-                <a href="mailto:support@pgease.in" className="hover:text-white transition-colors">support@pgease.in</a>
-              </li>
-              <li className="flex items-start gap-2 text-slate-500 text-[11px] pt-1 leading-snug">
-                <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
-                <span>Mon – Sat (9:30 AM – 7:00 PM IST)</span>
-              </li>
-            </ul>
+export const Footer: React.FC = () => (
+  <footer className="mt-16 border-t border-slate-200 bg-white text-sm text-slate-600">
+    <Container className="py-10">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+        <div className="space-y-3 md:col-span-2">
+          <Link to="/" className="inline-flex items-center gap-2">
+            <img
+              src="/assets/logo-transparent.png"
+              alt=""
+              className="h-7 w-auto object-contain"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+            <span className="whitespace-nowrap border-l border-slate-200 pl-2.5 text-sm font-medium text-slate-600">Help Center</span>
+          </Link>
+          <p className="max-w-sm text-sm leading-relaxed text-slate-500">
+            Guides and video tutorials for PG owners and managers using PG Ease to run their property day to day.
+          </p>
+          <div className="flex flex-wrap gap-4 pt-1 text-sm">
+            <a href={ownerAppUrl('/')} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-600 hover:text-brand-700">
+              Owner app <ExternalLink className="h-3 w-3" aria-hidden />
+            </a>
+            <a href={MARKETING_SITE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-600 hover:text-brand-700">
+              pgease.in <ExternalLink className="h-3 w-3" aria-hidden />
+            </a>
           </div>
         </div>
 
-        <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-          <p>© {new Date().getFullYear()} PG Ease Technologies Pvt. Ltd. All rights reserved.</p>
-          <div className="flex items-center gap-4 text-slate-400">
-            <a href="https://pgease.in/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy Policy</a>
-            <span>•</span>
-            <a href="https://pgease.in/terms" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Terms of Service</a>
-            <span>•</span>
-            <a href="https://pgease.in/refund" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Refund Policy</a>
-          </div>
+        <nav aria-label="Help topics">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Topics</h2>
+          <ul className="space-y-2">
+            {HELP_TOPICS.slice(0, 6).map((t) => (
+              <li key={t.key}>
+                <Link to={`/topics/${t.key}`} className="hover:text-brand-700">
+                  {t.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Support</h2>
+          <ul className="space-y-2.5">
+            <li className="flex items-center gap-2">
+              <Phone className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
+              <a href={SUPPORT_PHONE_TEL} className="hover:text-brand-700">
+                {SUPPORT_PHONE_DISPLAY}
+              </a>
+            </li>
+            <li className="flex items-center gap-2">
+              <Mail className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
+              <a href={supportMailtoUrl()} className="hover:text-brand-700">
+                {SUPPORT_EMAIL}
+              </a>
+            </li>
+            <li className="flex items-start gap-2 text-slate-500">
+              <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span>{SUPPORT_HOURS}</span>
+            </li>
+          </ul>
         </div>
       </div>
-    </footer>
-  );
-};
+
+      <div className="mt-8 border-t border-slate-200 pt-6 text-xs text-slate-500">© {new Date().getFullYear()} PG Ease. All rights reserved.</div>
+    </Container>
+  </footer>
+);

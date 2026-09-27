@@ -1,316 +1,225 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import {
-  ArrowLeft,
-  PlayCircle,
-  Clock,
-  Key,
-  Copy,
-  Check,
-  ExternalLink,
-  BookOpen,
-  Share2,
-  ThumbsUp,
-  ThumbsDown,
-  Monitor,
-  Smartphone,
-  CheckCircle2,
-  Loader2,
-  Sparkles,
-  PhoneCall,
-  Code2,
-} from 'lucide-react';
-import { fetchTutorialByKey, fetchAllTutorials } from '../services/api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Check, ExternalLink, Link2, PlayCircle, ThumbsDown, ThumbsUp, VideoOff } from 'lucide-react';
+import { fetchTutorialByKey, youTubeEmbedUrl } from '../services/api';
 import { Tutorial } from '../types/tutorial';
 import { TutorialCard } from '../components/TutorialCard';
+import { SupportCta } from '../components/SupportCta';
+import { Breadcrumbs, Button, Container, EmptyState, ErrorState, Skeleton, buttonClass, cx } from '../components/ui';
+import { TUTORIAL_OWNER_PATHS, topicForModule } from '../data/topics';
+import { ownerAppUrl } from '../config/links';
+
+type LoadState = 'loading' | 'ready' | 'missing' | 'error';
 
 export const TutorialDetailPage: React.FC = () => {
   const { tutorialKey = '' } = useParams<{ tutorialKey: string }>();
+  const [state, setState] = useState<LoadState>('loading');
   const [tutorial, setTutorial] = useState<Tutorial | null>(null);
-  const [related, setRelated] = useState<Tutorial[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [all, setAll] = useState<Tutorial[]>([]);
   const [copied, setCopied] = useState(false);
-  const [copiedUrl, setCopiedUrl] = useState(false);
-  const [feedbackGiven, setFeedbackGiven] = useState<'yes' | 'no' | null>(null);
+  const [feedback, setFeedback] = useState<'yes' | 'no' | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    setLoading(true);
-    fetchTutorialByKey(tutorialKey).then((data) => {
-      setTutorial(data);
-      setLoading(false);
+    let cancelled = false;
+    setState('loading');
+    setFeedback(null);
+    fetchTutorialByKey(tutorialKey).then((res) => {
+      if (cancelled) return;
+      setAll(res.all);
+      if (res.tutorial) {
+        setTutorial(res.tutorial);
+        setState('ready');
+      } else {
+        setTutorial(null);
+        setState(res.error ? 'error' : 'missing');
+      }
     });
+    return () => {
+      cancelled = true;
+    };
+  }, [tutorialKey, attempt]);
 
-    fetchAllTutorials().then((all) => {
-      const others = all.filter(
-        (t) => t.tutorial_key.toLowerCase() !== tutorialKey.toLowerCase()
-      );
-      setRelated(others.slice(0, 4));
-    });
-  }, [tutorialKey]);
+  useEffect(() => {
+    document.title = tutorial ? `${tutorial.title} · PG Ease Help Center` : 'PG Ease Help Center';
+  }, [tutorial]);
 
-  const handleCopyKey = () => {
-    if (!tutorial?.tutorial_key) return;
-    navigator.clipboard.writeText(tutorial.tutorial_key);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const topic = tutorial ? topicForModule(tutorial.module) : undefined;
+  const embedSrc = tutorial ? youTubeEmbedUrl(tutorial.youtube_url) : null;
+  const ownerPath = tutorial ? TUTORIAL_OWNER_PATHS[tutorial.tutorial_key] ?? topic?.ownerAppPath : undefined;
 
-  const handleShareUrl = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopiedUrl(true);
-    setTimeout(() => setCopiedUrl(false), 2000);
-  };
+  const related = useMemo(() => {
+    if (!tutorial) return [];
+    const sameTopic = all.filter((t) => t.id !== tutorial.id && topicForModule(t.module)?.key === topic?.key);
+    const others = all.filter((t) => t.id !== tutorial.id && !sameTopic.includes(t));
+    return [...sameTopic, ...others].slice(0, 4);
+  }, [all, tutorial, topic]);
 
-  const getEmbedUrl = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      return `https://www.youtube.com/embed/${match[2]}?autoplay=1&rel=0`;
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable — nothing to do */
     }
-    return url;
   };
 
-  if (loading) {
+  if (state === 'loading') {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-24 flex flex-col items-center justify-center space-y-3">
-        <Loader2 className="h-9 w-9 animate-spin text-brand-600" />
-        <p className="text-xs font-semibold text-slate-500">Loading video masterclass...</p>
-      </div>
+      <Container className="space-y-6 py-8" aria-busy="true">
+        <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-8 w-3/4 max-w-xl" />
+        <Skeleton className="aspect-video w-full max-w-3xl rounded-lg" />
+        <div className="max-w-3xl space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-11/12" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </Container>
     );
   }
 
-  if (!tutorial) {
+  if (state === 'error') {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-5">
-        <div className="h-16 w-16 rounded-3xl bg-brand-50 text-brand-600 flex items-center justify-center mx-auto shadow-soft">
-          <BookOpen className="h-8 w-8" />
+      <Container className="py-12">
+        <div className="mx-auto max-w-lg rounded-lg border border-slate-200 bg-white">
+          <ErrorState title="Couldn't load this tutorial" description="We couldn't reach the server. Please check your connection and try again." onRetry={() => setAttempt((a) => a + 1)} />
         </div>
-        <h2 className="text-2xl font-black text-slate-900">Tutorial Not Found</h2>
-        <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-          No video guide currently matches &ldquo;{tutorialKey}&rdquo;. You can browse all available tutorials or return to the learning hub.
-        </p>
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white font-bold text-xs shadow-soft hover:bg-brand-700 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Browse All Tutorials
-        </Link>
-      </div>
+      </Container>
     );
   }
 
-  const vUrl = tutorial.youtube_url || tutorial.video_url || '';
-  const embedSrc = getEmbedUrl(vUrl);
-
-  return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-24">
-      {/* Navigation Breadcrumb */}
-      <div className="flex items-center justify-between gap-4 text-xs">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 font-bold text-brand-700 hover:text-brand-800 hover:underline"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to all guides
-        </Link>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleShareUrl}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-          >
-            {copiedUrl ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-slate-500" />}
-            <span>{copiedUrl ? 'Link Copied!' : 'Share Guide'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* VIDEO PLAYER THEATER */}
-      <div className="space-y-4">
-        <div className="relative aspect-video w-full rounded-3xl overflow-hidden bg-black shadow-2xl border border-slate-200/80">
-          <iframe
-            src={embedSrc}
-            title={tutorial.title}
-            className="w-full h-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
+  if (state === 'missing' || !tutorial) {
+    return (
+      <Container className="space-y-8 py-12">
+        <div className="mx-auto max-w-lg rounded-lg border border-slate-200 bg-white">
+          <EmptyState
+            icon={<VideoOff />}
+            title="No tutorial for this yet"
+            description={`We don't have a guide for “${tutorialKey.replace(/[_-]+/g, ' ')}” right now. Browse the other tutorials or ask our team directly.`}
+            action={
+              <Link to="/tutorials" className={buttonClass('primary', 'sm')}>
+                Browse all tutorials
+              </Link>
+            }
           />
         </div>
+        <div className="mx-auto max-w-lg">
+          <SupportCta compact context={tutorialKey.replace(/[_-]+/g, ' ')} />
+        </div>
+      </Container>
+    );
+  }
 
-        {/* METADATA BAR */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-800 font-bold capitalize">
-              Module: {tutorial.module.replace(/_/g, ' ')}
-            </span>
+  return (
+    <Container className="py-8">
+      <Breadcrumbs
+        items={[
+          { label: 'Help Center', to: '/' },
+          ...(topic ? [{ label: topic.title, to: `/topics/${topic.key}` }] : [{ label: 'Tutorials', to: '/tutorials' }]),
+          { label: tutorial.title },
+        ]}
+      />
 
-            {tutorial.badge && (
-              <span className="px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 font-bold uppercase tracking-wider text-[11px]">
-                {tutorial.badge}
+      <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-12">
+        {/* Article */}
+        <article className="lg:col-span-8">
+          <header>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              {topic ? (
+                <Link to={`/topics/${topic.key}`} className="font-medium text-brand-700 hover:underline">
+                  {topic.title}
+                </Link>
+              ) : null}
+              <span aria-hidden>·</span>
+              <span className="inline-flex items-center gap-1">
+                {embedSrc ? <PlayCircle className="h-3.5 w-3.5" aria-hidden /> : null}
+                {embedSrc ? `Video${tutorial.duration ? ` · ${tutorial.duration}` : ''}` : 'Guide'}
               </span>
-            )}
-
-            {tutorial.duration && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-mono font-medium text-[11px]">
-                <Clock className="w-3 h-3 text-slate-500" />
-                {tutorial.duration}
-              </span>
-            )}
-
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium">
-              {tutorial.platform === 'APP' ? (
-                <>
-                  <Smartphone className="w-3 h-3 text-brand-600" />
-                  Mobile App
-                </>
-              ) : (
-                <>
-                  <Monitor className="w-3 h-3 text-brand-600" />
-                  Web & Mobile
-                </>
-              )}
-            </span>
-          </div>
-
-          {/* Technical Key Copy Pill */}
-          <div className="inline-flex items-center gap-2 bg-slate-900 text-white px-3 py-1 rounded-xl font-mono text-xs shadow-xs">
-            <span className="text-slate-400 text-[10px]">API Key:</span>
-            <span className="font-bold text-brand-300">{tutorial.tutorial_key}</span>
-            <button
-              type="button"
-              onClick={handleCopyKey}
-              className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-300 hover:text-white cursor-pointer"
-              title="Copy tutorial_key for mobile / web dev"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* CONTENT DETAILS & DESCRIPTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
-        {/* Main Details */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="space-y-3">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
-              {tutorial.title}
-            </h1>
-            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-              {tutorial.description}
-            </p>
-          </div>
-
-          {/* Developer Technical Deep-Link Box */}
-          <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-5 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-brand-800">
-              <Code2 className="w-4 h-4 text-brand-600" />
-              <span>Developer Deep-Link Integration</span>
             </div>
-            <p className="text-xs text-brand-900 leading-relaxed">
-              PG Owner Web & Mobile App can dynamically invoke this tutorial video anywhere in the codebase using the technical key:
-            </p>
-            <div className="flex items-center justify-between bg-white rounded-xl p-2.5 border border-brand-200 font-mono text-xs text-slate-800">
-              <code>openTutorial(&quot;{tutorial.tutorial_key}&quot;)</code>
-              <button
-                type="button"
-                onClick={handleCopyKey}
-                className="text-[11px] font-sans font-bold text-brand-700 hover:text-brand-900 cursor-pointer"
-              >
-                {copied ? 'Copied!' : 'Copy Code'}
-              </button>
-            </div>
-          </div>
+            <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">{tutorial.title}</h1>
+          </header>
 
-          {/* Helpful Feedback Widget */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
-            <div>
-              <h4 className="text-xs font-bold text-slate-900">Was this video tutorial helpful?</h4>
-              <p className="text-[11px] text-slate-500">Your feedback helps improve PG Ease operator training.</p>
+          {embedSrc ? (
+            <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-black">
+              <div className="aspect-video w-full">
+                <iframe
+                  src={embedSrc}
+                  title={tutorial.title}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setFeedbackGiven('yes')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  feedbackGiven === 'yes'
-                    ? 'bg-emerald-600 text-white shadow-soft'
-                    : 'bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700'
-                }`}
-              >
-                <ThumbsUp className="w-3.5 h-3.5" />
-                <span>Yes, helped!</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFeedbackGiven('no')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  feedbackGiven === 'no'
-                    ? 'bg-rose-600 text-white shadow-soft'
-                    : 'bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700'
-                }`}
-              >
-                <ThumbsDown className="w-3.5 h-3.5" />
-                <span>Still need help</span>
-              </button>
+          ) : (
+            <div className="mt-6 flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              <VideoOff className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+              <p>A video for this guide isn't available yet. The written steps below cover the same process.</p>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Sidebar Info & Support Card */}
-        <div className="space-y-6">
-          {/* Support Assist Card */}
-          <div className="rounded-3xl bg-slate-900 text-white p-6 space-y-4 shadow-xl border border-slate-800">
-            <div className="flex items-center gap-2 text-brand-400">
-              <PhoneCall className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-wider">PG Ease Support</span>
+          {tutorial.description ? (
+            <div className="prose-help mt-6 max-w-none">
+              {tutorial.description.split(/\n{2,}/).map((para, i) => (
+                <p key={i} className="text-base leading-7 text-slate-700">
+                  {para}
+                </p>
+              ))}
             </div>
-            <h3 className="text-base font-bold">Have questions regarding this step?</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Our operator assistance team is on standby to help you configure settings or answer tenant questions.
-            </p>
-            <div className="space-y-2 pt-2 border-t border-slate-800 text-xs">
-              <a
-                href="tel:+917701953356"
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold transition-colors shadow-soft"
-              >
-                <PhoneCall className="w-3.5 h-3.5" />
-                <span>Call +91 77019 53356</span>
+          ) : null}
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            {ownerPath ? (
+              <a href={ownerAppUrl(ownerPath)} target="_blank" rel="noopener noreferrer" className={buttonClass('primary', 'md')}>
+                Open this in PG Ease <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               </a>
-              <a
-                href="mailto:support@pgease.in"
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition-colors"
-              >
-                <span>Email Support Team</span>
-              </a>
+            ) : null}
+            <Button variant="secondary" onClick={copyLink}>
+              {copied ? <Check className="h-4 w-4 text-brand-700" aria-hidden /> : <Link2 className="h-4 w-4" aria-hidden />}
+              {copied ? 'Link copied' : 'Copy link'}
+            </Button>
+          </div>
+
+          {/* Feedback — stored locally only; there is no feedback API yet. */}
+          <div className="mt-10 rounded-lg border border-slate-200 bg-white p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-medium text-slate-900">Was this helpful?</p>
+              <div className="flex items-center gap-2" role="group" aria-label="Was this helpful?">
+                <Button variant="secondary" size="sm" aria-pressed={feedback === 'yes'} onClick={() => setFeedback('yes')} className={cx(feedback === 'yes' && 'border-brand-600 bg-brand-50 text-brand-800')}>
+                  <ThumbsUp className="h-3.5 w-3.5" aria-hidden /> Yes
+                </Button>
+                <Button variant="secondary" size="sm" aria-pressed={feedback === 'no'} onClick={() => setFeedback('no')} className={cx(feedback === 'no' && 'border-brand-600 bg-brand-50 text-brand-800')}>
+                  <ThumbsDown className="h-3.5 w-3.5" aria-hidden /> No
+                </Button>
+              </div>
             </div>
+            {feedback === 'yes' ? <p className="mt-3 text-sm text-slate-600">Glad it helped.</p> : null}
+            {feedback === 'no' ? (
+              <p className="mt-3 text-sm text-slate-600">Sorry about that — the team below can help you with this directly.</p>
+            ) : null}
           </div>
-        </div>
+        </article>
+
+        {/* Sidebar */}
+        <aside className="space-y-6 lg:col-span-4">
+          <SupportCta compact title="Still need help?" description="Ask us about this step — we'll walk you through it." context={tutorial.title} />
+          {related.length > 0 ? (
+            <section aria-labelledby="related-title" className="space-y-3">
+              <h2 id="related-title" className="text-sm font-semibold text-slate-900">
+                Related tutorials
+              </h2>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                {related.map((t) => (
+                  <TutorialCard key={t.id} tutorial={t} compact />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </aside>
       </div>
-
-      {/* RELATED VIDEOS */}
-      {related.length > 0 && (
-        <div className="pt-8 border-t border-slate-200 space-y-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-slate-900 tracking-tight">
-              More Recommended Masterclasses
-            </h3>
-            <Link to="/" className="text-xs font-bold text-brand-700 hover:underline">
-              View all
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {related.map((item) => (
-              <TutorialCard key={item.id || item.tutorial_key} tutorial={item} />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+    </Container>
   );
 };
