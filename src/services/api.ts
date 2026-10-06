@@ -29,6 +29,8 @@ const TUTORIAL_METADATA_MAP: Record<string, { tutorial_key: string; module: stri
   'tenant complaints & maintenance ticketing': { tutorial_key: 'complaints_resolution', module: 'complaint_management', action: 'resolve_complaint', platform: 'ALL' },
   'resolving tenant complaints & service requests': { tutorial_key: 'complaints_resolution', module: 'complaint_management', action: 'resolve_complaint', platform: 'ALL' },
   'publishing your pg online & capturing direct leads': { tutorial_key: 'public_listing', module: 'public_listing', action: 'post_pg', platform: 'ALL' },
+  'how to post your pg in live': { tutorial_key: 'post_your_pg_in_live', module: 'public_listing', action: 'post_pg', platform: 'ALL' },
+  'how to post your pg': { tutorial_key: 'post_your_pg_in_live', module: 'public_listing', action: 'post_pg', platform: 'ALL' },
 };
 
 /** Backend `category` → feature module (used when the title isn't in the map above). */

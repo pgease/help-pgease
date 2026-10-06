@@ -83,5 +83,7 @@ export const TUTORIAL_OWNER_PATHS: Record<string, string> = {
   expense_tracker: '/expenses',
   complaints_resolution: '/complaints',
   public_listing: '/post-pg',
+  post_your_pg_in_live: '/post-pg',
+  post_pg: '/post-pg',
   onboarding_guide: '/dashboard',
 };
