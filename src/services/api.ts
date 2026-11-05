@@ -1,14 +1,8 @@
 import { Tutorial, TutorialsResult } from '../types/tutorial';
 
-const isLocalhost =
-  typeof window !== 'undefined' &&
-  (window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1' ||
-    window.location.hostname === '[::1]');
-
-const API_BASE = isLocalhost
-  ? '/api'
-  : (import.meta.env.VITE_API_BASE_URL || 'https://am4eey3lmk.execute-api.ap-south-1.amazonaws.com/api');
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://am4eey3lmk.execute-api.ap-south-1.amazonaws.com/api';
 
 /**
  * The backend tutorial records currently carry no `tutorial_key`; the Owner app deep-links by key
