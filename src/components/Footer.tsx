@@ -29,7 +29,7 @@ export const Footer: React.FC = () => (
               Owner app <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
             <a href={MARKETING_SITE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-600 hover:text-brand-700">
-              pgease.in <ExternalLink className="h-3 w-3" aria-hidden />
+              pgease.com <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           </div>
         </div>

@@ -15,7 +15,7 @@ const TUTORIAL_METADATA_MAP: Record<string, { tutorial_key: string; module: stri
   'how to collect rent & reconcile upi payments': { tutorial_key: 'rent_collection', module: 'rent_collection', action: 'collect_rent', platform: 'ALL' },
   'property setup: rooms, floors & bed allocation': { tutorial_key: 'room_management', module: 'property_setup', action: 'configure_rooms', platform: 'WEB' },
   'digilocker aadhaar kyc & agreement signing': { tutorial_key: 'kyc_verification', module: 'kyc_verification', action: 'verify_aadhaar', platform: 'ALL' },
-  'instant digital aadhaar & police kyc verification': { tutorial_key: 'kyc_verification', module: 'kyc_verification', action: 'verify_aadhaar', platform: 'ALL' },
+  'instant digital aadhaar kyc verification': { tutorial_key: 'kyc_verification', module: 'kyc_verification', action: 'verify_aadhaar', platform: 'ALL' },
   'staff management, wardens & granular roles': { tutorial_key: 'staff_management', module: 'staff_management', action: 'manage_staff', platform: 'WEB' },
   'managing staff roles & access permissions': { tutorial_key: 'staff_management', module: 'staff_management', action: 'manage_staff', platform: 'WEB' },
   'tracking pg expenses, electricity & monthly profits': { tutorial_key: 'expense_tracker', module: 'expense_management', action: 'record_expense', platform: 'ALL' },
@@ -121,8 +121,11 @@ export async function fetchAllTutorials(opts: { force?: boolean } = {}): Promise
   if (!opts.force && listCache && Date.now() - listCache.at < CACHE_TTL_MS && !listCache.result.error) {
     return listCache.result;
   }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
   try {
-    const res = await fetch(`${API_BASE}/tutorials`);
+    const res = await fetch(`${API_BASE}/tutorials`, { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     const data = Array.isArray(json) ? json : json?.data;
@@ -134,6 +137,7 @@ export async function fetchAllTutorials(opts: { force?: boolean } = {}): Promise
     listCache = { at: Date.now(), result };
     return result;
   } catch (err) {
+    clearTimeout(timeoutId);
     const message = err instanceof Error ? err.message : 'Unknown error';
     return { tutorials: [], error: message };
   }

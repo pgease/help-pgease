@@ -5,16 +5,16 @@
 const env = import.meta.env as Record<string, string | undefined>;
 
 /** PG Ease Owner web app. */
-export const OWNER_APP_URL = (env.VITE_OWNER_APP_URL || 'https://app.pgease.in').replace(/\/+$/, '');
+export const OWNER_APP_URL = (env.VITE_OWNER_APP_URL || 'https://app.pgease.com').replace(/\/+$/, '');
 
 /** Public marketing website. */
-export const MARKETING_SITE_URL = 'https://pgease.in';
+export const MARKETING_SITE_URL = 'https://pgease.com';
 
 /** Real support channels (same values as the Owner app). */
 export const SUPPORT_PHONE_DISPLAY = '+91 77019 53356';
 export const SUPPORT_PHONE_TEL = 'tel:+917701953356';
 export const SUPPORT_WHATSAPP_NUMBER = '917701953356';
-export const SUPPORT_EMAIL = 'support@pgease.in';
+export const SUPPORT_EMAIL = 'support@pgease.com';
 export const SUPPORT_HOURS = 'Mon – Sat, 9:30 AM – 7:00 PM IST';
 
 export function supportWhatsAppUrl(message?: string): string {
