@@ -23,7 +23,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     key: 'rent',
     title: 'Rent & payments',
     description: 'Collect rent, record payments, send reminders and track dues.',
-    modules: ['rent_collection', 'expense_management'],
+    modules: ['rent_collection', 'expense_management', 'electricity'],
     ownerAppPath: '/rent-payments',
   },
   {
@@ -81,6 +81,7 @@ export const TUTORIAL_OWNER_PATHS: Record<string, string> = {
   kyc_verification: '/tenants/kyc',
   staff_management: '/team',
   expense_tracker: '/expenses',
+  electricity_billing: '/operations/electricity',
   complaints_resolution: '/complaints',
   public_listing: '/post-pg',
   post_your_pg_in_live: '/post-pg',

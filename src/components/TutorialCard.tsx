@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlayCircle, FileText, Clock } from 'lucide-react';
 import { Tutorial } from '../types/tutorial';
@@ -14,6 +14,7 @@ interface TutorialCardProps {
  * neutral "guide" tile. Never shows placeholder videos or technical keys to owners.
  */
 export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial, compact }) => {
+  const [imgFailed, setImgFailed] = useState(false);
   const hasVideo = Boolean(tutorial.youtube_url);
   const topic = topicForModule(tutorial.module);
 
@@ -43,15 +44,13 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial, compact })
       className="group flex h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition-shadow hover:border-slate-300 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
     >
       <div className="relative aspect-video w-full overflow-hidden bg-slate-100">
-        {hasVideo && tutorial.thumbnail_url ? (
+        {hasVideo && tutorial.thumbnail_url && !imgFailed ? (
           <img
             src={tutorial.thumbnail_url}
             alt=""
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
+            onError={() => setImgFailed(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-slate-300">
