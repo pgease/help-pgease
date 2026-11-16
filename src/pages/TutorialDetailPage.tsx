@@ -135,7 +135,7 @@ export const TutorialDetailPage: React.FC = () => {
               <span aria-hidden>·</span>
               <span className="inline-flex items-center gap-1">
                 {embedSrc ? <PlayCircle className="h-3.5 w-3.5" aria-hidden /> : null}
-                {embedSrc ? `Video${tutorial.duration ? ` · ${tutorial.duration}` : ''}` : 'Guide'}
+                {embedSrc ? 'Video' : 'Guide'}
               </span>
             </div>
             <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">{tutorial.title}</h1>

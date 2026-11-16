@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlayCircle, FileText, Clock } from 'lucide-react';
+import { PlayCircle, FileText } from 'lucide-react';
 import { Tutorial } from '../types/tutorial';
 import { topicForModule } from '../data/topics';
 
@@ -30,7 +30,6 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial, compact })
         <span className="min-w-0">
           <span className="block text-xs text-slate-500">
             {topic?.title ?? humanize(tutorial.module)}
-            {hasVideo && tutorial.duration ? ` · ${tutorial.duration}` : ''}
           </span>
           <span className="mt-0.5 block text-sm font-medium leading-snug text-slate-900 group-hover:text-brand-700 line-clamp-2">{tutorial.title}</span>
         </span>
@@ -64,11 +63,7 @@ export const TutorialCard: React.FC<TutorialCardProps> = ({ tutorial, compact })
             </span>
           </span>
         ) : null}
-        {hasVideo && tutorial.duration ? (
-          <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded bg-slate-900/80 px-1.5 py-0.5 text-[11px] font-medium text-white tabular-nums">
-            <Clock className="h-3 w-3" aria-hidden /> {tutorial.duration}
-          </span>
-        ) : null}
+
       </div>
 
       <div className="flex flex-1 flex-col p-4">
